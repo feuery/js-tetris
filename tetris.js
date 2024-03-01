@@ -18,12 +18,17 @@ function block_width(block) {
 }
 
 function rand(max) {
-  return Math.floor(Math.random() * max);
+    return Math.floor(Math.random() * max);
 }
 
 let world = null;
-let current_block = {position: [0, 0],
-		     data: blocks[rand(blocks.length)]};
+
+function init_block() {
+    return {position: [0, 0],
+	    data: blocks[rand(blocks.length)]};
+}
+
+let current_block = init_block();
 
 function vec_plus (vec1, vec2) {
     let [x1, y1] = vec1,
@@ -74,7 +79,7 @@ function toHexColor(color_code) {
 	"#FFFFFF":
 	color_code == RED?
 	"#FF0000"
-	// the wtf-color
+    // the wtf-color
 	: "#00AA00";
 }
 
@@ -98,6 +103,9 @@ function drawWorld(ctx, canvas, world) {
     for(let x = 0; x < current_block.data.length; x++)
 	for(let y = 0; y < current_block.data[x].length; y++) {
 	    let color = current_block.data[x][y];
+
+	    if (color == WHITE) continue;
+	    
 	    ctx.fillStyle = toHexColor(color);
 
 	    let [w_x, w_y, width, height] = toWorldCoord(x, y);
@@ -107,12 +115,12 @@ function drawWorld(ctx, canvas, world) {
 
 function keyup(e) { 
     switch(e.key) {
-    // case 'ArrowUp':
-    // 	direction = [0, -1];
-    // 	break;
-    // case 'ArrowDown':
-    // 	direction = [0, 1];
-    // 	break;
+	// case 'ArrowUp':
+	// 	direction = [0, -1];
+	// 	break;
+	// case 'ArrowDown':
+	// 	direction = [0, 1];
+	// 	break;
     case 'ArrowLeft':
 	if (current_block.position[0] > 0) {
 	    current_block.position = vec_plus(current_block.position,
@@ -161,13 +169,56 @@ function draw() {
     drawWorld(ctx, canvas, world);
 }
 
+function merge_block_to_world() {
+    let [block_x, block_y] = current_block.position;
+    let w = block_width(current_block),
+	h = block_height(current_block);
+    for(let x = block_x; x < block_x + w; x++)
+	for(let y = block_y; y < block_y + h; y++) {
+	    let block_at = current_block.data[x - block_x][y - block_y]
+	    if(block_at == WHITE) continue;
+	    
+	    world[x][y] = block_at;
+	}
+}
+
+function collides_next_step(block) {
+    let [x, y] = block.position;
+    let w = block_width(block),
+	h = block_height(block);
+    let right_x = x + w,
+	down_y = y + h;
+
+    let coords = [];
+
+    for (let xx = x; xx < right_x; xx++) {
+	coords.push([xx, y - 1]);
+	coords.push([xx, down_y]);
+    }
+    
+    for(let [x, y] of coords) {
+	if ( x < 0 || y < 0) continue;
+	let block = world[x][y];
+	if (block == RED) return true;
+    }
+    return false;
+}
+
+
 function update() {
     let [ctx, canvas] = getCtx();
     let [_, y] = current_block.position;
     let [notinteresting, map_h] = max_dimensions(canvas);
     
-    if ( y + block_height(current_block) < map_h)
+    if (!collides_next_step(current_block)
+	  &&
+	(y + block_height(current_block) < map_h)) 
 	current_block.position = vec_plus(current_block.position, [0, 1]);
+    else {
+	merge_block_to_world();
+	current_block = init_block();
+    }
+    
     draw();
 }
 
