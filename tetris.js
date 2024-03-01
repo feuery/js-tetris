@@ -2,20 +2,40 @@ const grid_w = 50, grid_h = 50;
 const blocks = [[[1, 1],
 		 [1, 1]],
 
-		[[1, 1, 1]],
+		[[1, 1, 1, 1]],
 
 		[[1, 1, 1], [0, 0, 1]],
 		[[0, 0, 1], [1, 1, 1]],
 		[[1, 0], [1, 1], [0, 1]],
 		[[0, 1], [1, 1], [1, 0]]]
 
+function block_height(block) {
+    return block.data[0].length;
+}
+
+function block_width(block) {
+    return block.data.length;
+}
+
 function rand(max) {
   return Math.floor(Math.random() * max);
 }
 
 let world = null;
-let current_block = {position: [4, 4],
+let current_block = {position: [0, 0],
 		     data: blocks[rand(blocks.length)]};
+
+function vec_plus (vec1, vec2) {
+    let [x1, y1] = vec1,
+	[x2, y2] = vec2;
+    return [x1 + x2, y1 + y2];
+}
+
+function vec_eq (vec1, vec2) {
+    let [x1, y1] = vec1,
+	[x2, y2] = vec2;
+    return x1 == x2 && y1 == y2;
+}
 
 function getCtx() {
     const canvas = document.querySelector('#canv');
@@ -85,29 +105,32 @@ function drawWorld(ctx, canvas, world) {
 	}
 }
 
-function keyup(e) { /*
-    if (e.key == oldkey)
-    {
-	direction = [0, 0]
-	return;
-    }
-    
+function keyup(e) { 
     switch(e.key) {
-    case 'ArrowUp':
-	direction = [0, -1];
-	break;
-    case 'ArrowDown':
-	direction = [0, 1];
-	break;
+    // case 'ArrowUp':
+    // 	direction = [0, -1];
+    // 	break;
+    // case 'ArrowDown':
+    // 	direction = [0, 1];
+    // 	break;
     case 'ArrowLeft':
-	direction = [-1, 0];
+	if (current_block.position[0] > 0) {
+	    current_block.position = vec_plus(current_block.position,
+					      [-1, 0]);
+	    draw();
+	}
 	break;
     case 'ArrowRight':
-	direction = [1, 0];
+	let [ctx, canvas] = getCtx();
+	let [world_w, world_h] = max_dimensions(canvas);
+
+	if((current_block.position[0] + block_width(current_block)) < world_w) {
+	    current_block.position = vec_plus(current_block.position,
+					      [1, 0]);
+	    draw();
+	}
 	break;
     }
-
-    oldkey = e.key; */
 }
 
 function draw_line(ctx, x1, y1, x2, y2) {
@@ -138,11 +161,23 @@ function draw() {
     drawWorld(ctx, canvas, world);
 }
 
+function update() {
+    let [ctx, canvas] = getCtx();
+    let [_, y] = current_block.position;
+    let [notinteresting, map_h] = max_dimensions(canvas);
+    
+    if ( y + block_height(current_block) < map_h)
+	current_block.position = vec_plus(current_block.position, [0, 1]);
+    draw();
+}
+
 
 document.addEventListener("DOMContentLoaded", e => {
     let [ctx, canvas] = getCtx();
     world = create_world(canvas);
+    current_block.position[0] = Math.floor(canvas.width / grid_w / 2) - 2;
     draw();
+    setInterval(update, 1000);
 });
 
 document.addEventListener('keyup', keyup);
