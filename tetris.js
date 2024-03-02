@@ -115,19 +115,70 @@ function drawWorld(ctx, canvas, world) {
 	}
 }
 
+const transpose = array => array[0].map((r, i) => array.map(c => c[i]));
+
+function rotate_block(block) {
+    block.data = transpose(block.data);
+    return block;
+}
+
+function collides_horizontally(block) {
+    let [x, y] = block.position;
+    let w = block_width(block),
+	h = block_height(block);
+    let right_x = x + w,
+	down_y = y + h;
+
+    let coords = [];
+
+    for (let yy = y; yy < down_y; yy++) {
+	let x1 = x-1;
+	if (x1 > 0 &&
+	    world[x1][yy] == RED) return 'LEFT';
+
+	if(world[right_x][yy] == RED) return 'RIGHT';
+    }
+    
+    return false;
+}
+
+
+function collides_next_step(block) {
+    let [x, y] = block.position;
+    let w = block_width(block),
+	h = block_height(block);
+    let right_x = x + w,
+	down_y = y + h;
+
+    let coords = [];
+
+    for (let xx = x; xx < right_x; xx++) {
+	// coords.push([xx, y - 1]);
+	coords.push([xx, down_y]);
+    }
+    
+    for(let [x, y] of coords) {
+	if ( x < 0 || y < 0) continue;
+	let block = world[x][y];
+	if (block == RED) return true;
+    }
+    return false;
+}
+
 function keyup(e) {
 
     if(lost) return;
     
     switch(e.key) {
-	// case 'ArrowUp':
-	// 	direction = [0, -1];
-	// 	break;
+    case 'ArrowUp':
+	current_block = rotate_block(current_block);
+	break;
 	// case 'ArrowDown':
 	// 	direction = [0, 1];
 	// 	break;
     case 'ArrowLeft':
-	if (current_block.position[0] > 0) {
+	if (collides_horizontally(current_block) != 'LEFT' &&
+	    current_block.position[0] > 0) {
 	    current_block.position = vec_plus(current_block.position,
 					      [-1, 0]);
 	    draw();
@@ -137,7 +188,8 @@ function keyup(e) {
 	let [ctx, canvas] = getCtx();
 	let [world_w, world_h] = max_dimensions(canvas);
 
-	if((current_block.position[0] + block_width(current_block)) < world_w) {
+	if(collides_horizontally(current_block) != 'RIGHT' &&
+	   (current_block.position[0] + block_width(current_block)) < world_w) {
 	    current_block.position = vec_plus(current_block.position,
 					      [1, 0]);
 	    draw();
@@ -185,28 +237,6 @@ function merge_block_to_world() {
 	    
 	    world[x][y] = block_at;
 	}
-}
-
-function collides_next_step(block) {
-    let [x, y] = block.position;
-    let w = block_width(block),
-	h = block_height(block);
-    let right_x = x + w,
-	down_y = y + h;
-
-    let coords = [];
-
-    for (let xx = x; xx < right_x; xx++) {
-	coords.push([xx, y - 1]);
-	coords.push([xx, down_y]);
-    }
-    
-    for(let [x, y] of coords) {
-	if ( x < 0 || y < 0) continue;
-	let block = world[x][y];
-	if (block == RED) return true;
-    }
-    return false;
 }
 
 
