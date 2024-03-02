@@ -1,3 +1,4 @@
+let lost = false;
 const grid_w = 50, grid_h = 50;
 const blocks = [[[1, 1],
 		 [1, 1]],
@@ -22,9 +23,10 @@ function rand(max) {
 }
 
 let world = null;
+const init_position = [0, 0];
 
 function init_block() {
-    return {position: [0, 0],
+    return {position: init_position,
 	    data: blocks[rand(blocks.length)]};
 }
 
@@ -113,7 +115,10 @@ function drawWorld(ctx, canvas, world) {
 	}
 }
 
-function keyup(e) { 
+function keyup(e) {
+
+    if(lost) return;
+    
     switch(e.key) {
 	// case 'ArrowUp':
 	// 	direction = [0, -1];
@@ -206,6 +211,8 @@ function collides_next_step(block) {
 
 
 function update() {
+    if(lost) return;
+    
     let [ctx, canvas] = getCtx();
     let [_, y] = current_block.position;
     let [notinteresting, map_h] = max_dimensions(canvas);
@@ -216,7 +223,19 @@ function update() {
 	current_block.position = vec_plus(current_block.position, [0, 1]);
     else {
 	merge_block_to_world();
-	current_block = init_block();
+
+	let new_block = init_block();
+
+	let [block_x, block_y] = new_block.position;
+	for(let x = 0; x < new_block.data.length; x++)
+	    for(let y= 0; y < new_block.data[x].length; y++) {
+		if (world[block_x + x][block_y + y] == RED) {
+		    alert('u ded!');
+		    lost = true;
+		}
+	    }
+	
+	current_block = new_block
     }
     
     draw();
