@@ -130,8 +130,6 @@ function collides_horizontally(block) {
     let right_x = x + w,
 	down_y = y + h;
 
-    let coords = [];
-
     try {
 	for (let yy = y; yy < down_y; yy++) {
 	    let x1 = x-1;
@@ -150,7 +148,9 @@ function collides_horizontally(block) {
 }
 
 function collides_next_step(block) {
-    let [x, y] = block.position;
+    let [x, y] = block.position,
+	[block_x, block_y] = block.position;
+    
     let w = block_width(block),
 	h = block_height(block);
     let right_x = x + w,
@@ -159,14 +159,16 @@ function collides_next_step(block) {
     let coords = [];
 
     for (let xx = x; xx < right_x; xx++) {
-	// coords.push([xx, y - 1]);
 	coords.push([xx, down_y]);
     }
     
     for(let [x, y] of coords) {
 	if ( x < 0 || y < 0) continue;
 	let block = world[x][y];
-	if (block == RED) return true;
+	let subblock_x = x - block_x,
+	    subblock_y = y - block_y - 1;
+	let current_subblock = current_block.data[subblock_x >= 0? subblock_x: 0][subblock_y >=0? subblock_y: 0];
+	if (block == RED && current_subblock == RED) return true;
     }
     return false;
 }
