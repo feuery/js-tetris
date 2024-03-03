@@ -116,9 +116,10 @@ function drawWorld(ctx, canvas, world) {
 }
 
 const transpose = array => array[0].map((r, i) => array.map(c => c[i]));
+const rotate = matrix => matrix[0].map((val, index) => matrix.map(row => row[index]).reverse());
 
 function rotate_block(block) {
-    block.data = transpose(block.data);
+    block.data = rotate(block.data);
     return block;
 }
 
