@@ -171,7 +171,6 @@ function collides_next_step(block) {
 	    if ((block == RED && colliding_block1 == RED)
 		||
 		(other_block == RED && colliding_block2 == RED)) {
-		alert ('COLLISION');
 		return true;
 	    }
 	}
@@ -226,9 +225,32 @@ function draw_line(ctx, x1, y1, x2, y2) {
 
 function there_are_full_rows() {
     let transposed_world = transpose(world);
-    
-    return transposed_world.some(subarray => subarray.every(element => element == RED));
-}    
+    let relevant_indexes =
+	transposed_world.map((subarray, index) => {
+	    return {full_row: subarray.every(element => element == RED),
+		    index}
+	})
+	.filter(o => {
+	    return o.full_row;
+	})
+	.map(({index}) => index);
+    if(relevant_indexes.length > 0) return relevant_indexes;
+}
+
+function remove_full_rows(indexes) {
+    console.log("indexes", indexes);
+
+    world = world
+    // remove full rows
+	.map(arr => arr.filter((val, index) => !(indexes.some(i => i == index ))))
+    // cons empty rows on top of the removed ones
+	.map(arr => {
+	    for (let i = 0; i < indexes.length; i++) {
+		arr.unshift(WHITE);
+	    }
+	    return arr;
+	});    
+}
 
 function draw() {
     let [ctx, canvas] = getCtx();
@@ -293,10 +315,10 @@ function update() {
 	current_block = new_block
     }
 
-    if(there_are_full_rows()) {
-	alert('lol voitit');
-	// to cease the update loop
-	lost = true;
+    let full_rows = there_are_full_rows();
+
+    if(full_rows) {
+	remove_full_rows(full_rows);
     }
     
     draw();
