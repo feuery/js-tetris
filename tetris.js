@@ -178,9 +178,11 @@ function keyup(e) {
     case 'ArrowUp':
 	current_block = rotate_block(current_block);
 	break;
-	// case 'ArrowDown':
-	// 	direction = [0, 1];
-	// 	break;
+    case 'ArrowDown':
+	while (does_not_collide()) 
+	    move_down();
+	draw();
+	break;
     case 'ArrowLeft':
 	if (collides_horizontally(current_block) != 'LEFT' &&
 	    current_block.position[0] > 0) {
@@ -273,18 +275,27 @@ function merge_block_to_world() {
 	}
 }
 
+function does_not_collide() {
+    let [_, y] = current_block.position;
+    let [ctx, canvas] = getCtx();
+    let [notinteresting, map_h] = max_dimensions(canvas);
+    return !collides_next_step(current_block)
+	&&
+	(y + block_height(current_block) < map_h)
+}
+
+function move_down() {
+    current_block.position = vec_plus(current_block.position, [0, 1]);
+}
 
 function update() {
     if(lost) return;
     
     let [ctx, canvas] = getCtx();
     let [_, y] = current_block.position;
-    let [notinteresting, map_h] = max_dimensions(canvas);
     
-    if (!collides_next_step(current_block)
-	  &&
-	(y + block_height(current_block) < map_h)) 
-	current_block.position = vec_plus(current_block.position, [0, 1]);
+    if (does_not_collide()) 
+	move_down()
     else {
 	merge_block_to_world();
 
