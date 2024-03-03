@@ -148,38 +148,25 @@ function collides_horizontally(block) {
     }
 }
 
-
 function collides_next_step(block) {
     let [x, y] = block.position;
     let w = block_width(block),
 	h = block_height(block);
     let right_x = x + w,
 	down_y = y + h;
-    
+
+    let coords = [];
+
     for (let xx = x; xx < right_x; xx++) {
 	// coords.push([xx, y - 1]);
-
-	if (y - 1 < 0) continue;
-
-	try {
-	    let row = current_block.data[xx - x];
-	    let colliding_block1 = current_block.data[xx - x][0], 
-		colliding_block2 = current_block.data[xx - x][row.length - 1],
-		block = world[x][y - 1],
-		other_block = world[x][down_y - 1];
-	    
-	    if ((block == RED && colliding_block1 == RED)
-		||
-		(other_block == RED && colliding_block2 == RED)) {
-		return true;
-	    }
-	}
-	catch(ex) {
-	    debugger;
-	    throw ex;
-	}
+	coords.push([xx, down_y]);
     }
     
+    for(let [x, y] of coords) {
+	if ( x < 0 || y < 0) continue;
+	let block = world[x][y];
+	if (block == RED) return true;
+    }
     return false;
 }
 
